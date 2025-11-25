@@ -1,7 +1,7 @@
 {
   "name": "chrome-utils",
   "version": "1.0.0",
-  "description": "Chrome Utils - 个人自用 Chrome 插件",
+  "description": "Chrome Utils - 自定义 Chrome 插件",
   "type": "module",
   "scripts": {
     "dev": "vite",

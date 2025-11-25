@@ -2,11 +2,11 @@
   "manifest_version": 3,
   "name": "Chrome Utils",
   "version": "1.0.0",
-  "description": "个人自用 Chrome 工具插件",
+  "description": "自定义 Chrome 工具插件",
   "icons": {
-    "16": "public/icons/icon16.png",
-    "48": "public/icons/icon48.png",
-    "128": "public/icons/icon128.png"
+    "16": "public/icons/logo.png",
+    "48": "public/icons/logo.png",
+    "128": "public/icons/logo.png"
   },
   "permissions": [
     "storage",
@@ -45,9 +45,9 @@
   "action": {
     "default_popup": "src/popup/popup.html",
     "default_icon": {
-      "16": "public/icons/icon16.png",
-      "48": "public/icons/icon48.png",
-      "128": "public/icons/icon128.png"
+      "16": "public/icons/logo.png",
+      "48": "public/icons/logo.png",
+      "128": "public/icons/logo.png"
     },
     "default_title": "Chrome Utils"
   },
