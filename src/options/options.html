@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chrome Utils - 设置</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="options-container">
+    <header class="options-header">
+      <h1>Chrome Utils 设置</h1>
+      <p class="subtitle">自定义你的插件配置</p>
+    </header>
+
+    <main class="options-content">
+      <section class="settings-section">
+        <h2>基本设置</h2>
+
+        <div class="setting-item">
+          <label class="setting-label">
+            <input type="checkbox" id="enableContentScript" checked>
+            <span>启用 Content Script</span>
+          </label>
+          <p class="setting-desc">在所有网页上注入内容脚本</p>
+        </div>
+
+        <div class="setting-item">
+          <label class="setting-label">
+            <input type="checkbox" id="enableNotifications" checked>
+            <span>启用通知</span>
+          </label>
+          <p class="setting-desc">允许插件发送系统通知</p>
+        </div>
+      </section>
+
+      <section class="settings-section">
+        <h2>高级设置</h2>
+
+        <div class="setting-item">
+          <label class="setting-label" for="logLevel">日志级别</label>
+          <select id="logLevel" class="setting-select">
+            <option value="none">关闭</option>
+            <option value="error">仅错误</option>
+            <option value="warn">警告及以上</option>
+            <option value="info" selected>信息及以上</option>
+            <option value="debug">全部</option>
+          </select>
+        </div>
+      </section>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="btnSave">保存设置</button>
+        <button class="btn btn-secondary" id="btnReset">重置默认</button>
+      </div>
+    </main>
+
+    <footer class="options-footer">
+      <p>Chrome Utils v1.0.0</p>
+    </footer>
+  </div>
+
+  <script type="module" src="options.ts"></script>
+</body>
+</html>
+
