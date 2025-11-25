@@ -34,7 +34,6 @@
     {
       "matches": ["<all_urls>"],
       "js": ["src/content/content.ts"],
-      "css": ["src/content/content.css"],
       "run_at": "document_end"
     }
   ],
