@@ -51,19 +51,6 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   }
 })
 
-// 创建右键菜单
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.contextMenus.create({
-    id: 'chrome-utils-menu',
-    title: 'Chrome Utils',
-    contexts: ['all'],
-  })
-})
-
-// 右键菜单点击事件
-chrome.contextMenus.onClicked.addListener((info, tab) => {
-  console.log('[Chrome Utils] Context menu clicked:', info.menuItemId, tab?.url)
-})
 
 // 导出空对象以确保这是一个模块
 export {}
