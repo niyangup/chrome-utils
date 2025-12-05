@@ -1,0 +1,68 @@
+---
+alwaysApply: true
+---
+# Chrome Utils 项目开发指南
+
+## 1. 项目概述
+这是一个基于 Manifest V3 的 Chrome 扩展项目，使用 Vite + TypeScript 构建。
+核心特点：
+- **构建工具**: Vite + @crxjs/vite-plugin
+- **语言**: TypeScript (严格模式)
+- **框架**: Vanilla TypeScript (原生 DOM 操作，无前端框架)
+- **样式**: 原生 CSS
+
+## 2. 目录结构
+- `src/manifest.json`: 插件清单文件（源码），CRXJS 会自动处理
+- `src/background/`: Service Worker 脚本
+- `src/content/`: Content Scripts
+  - `src/content/all/`: **通用功能**（作用于 `<all_urls>`）
+  - `src/content/cursor/`: **特定站点功能**（如 Cursor）
+  - `src/content/<site>/`: **新增站点**（如 Google）请在此新建目录，包含 ts+css
+- `src/popup/`: 点击插件图标弹出的页面
+- `src/options/`: 插件设置页面
+- `src/utils/`: 通用工具函数 (Storage, Message, DOM)
+
+## 3. 开发规范
+
+### 3.1 代码风格
+- 使用 TypeScript 编写所有逻辑。
+- 优先使用 `const`，避免使用 `var`。
+- 异步操作优先使用 `async/await`。
+- 显式定义函数参数和返回值的类型。
+
+### 3.2 消息通信 (Messaging)
+- **禁止**直接使用 `chrome.runtime.sendMessage`。
+- **必须**使用 `src/utils/message.ts` 中的封装函数：
+  - `sendToBackground`: 发送给后台
+  - `sendToTab`: 发送给特定标签页
+  - `sendToActiveTab`: 发送给当前激活标签页
+
+### 3.3 数据存储 (Storage)
+- **禁止**直接使用 `chrome.storage` API。
+- **必须**使用 `src/utils/storage.ts` 中的封装函数：
+  - `storage.get(key, default)`
+  - `storage.set(key, value)`
+  - 默认使用 `sync` 存储，如需本地存储请指定 `'local'`。
+
+### 3.4 DOM 操作
+- Content Script 中涉及 DOM 操作时，优先检查 `src/utils/dom.ts` 是否有可用工具。
+- 避免直接使用 `innerHTML`，以防 XSS 攻击。
+- 获取元素时注意判空处理。
+
+### 3.5 Content Script 扩展规范
+- **特定站点**：针对特定网站（如 Google, GitHub）的功能，**必须**在 `src/content/` 下新建同名子目录（如 `src/content/google/`），并在其中创建 `content.ts` 和 `content.css`。
+- **通用功能**：只有确实需要作用于所有网页的功能，才写在 `src/content/all/` 中。
+- **配置同步**：新建子目录后，记得在 `manifest.json` 的 `content_scripts` 数组中添加对应的配置项（`matches` 和 `js` 路径）。
+
+## 4. Manifest V3 注意事项
+- Background Script 是 Service Worker，**不能访问 DOM**，且会随时终止（非持久运行）。
+- 需要持久化的状态必须保存到 `chrome.storage`。
+- 远程代码执行（Remote Code Execution）被严格禁止。
+
+## 5. 构建与调试
+- 开发模式: `npm run dev` (支持 HMR 热更新)
+- 生产构建: `npm run build`
+- 调试:
+  - Popup/Options: 右键 -> 审查元素
+  - Content Script: 页面 F12 -> Console
+  - Background: 扩展管理页 -> Service Worker 视图
