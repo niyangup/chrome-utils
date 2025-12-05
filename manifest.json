@@ -44,6 +44,11 @@
       "matches": ["*://*.zhihu.com/*"],
       "js": ["src/content/zhihu/content.ts"],
       "run_at": "document_end"
+    },
+    {
+      "matches": ["*://*.csdn.net/*"],
+      "js": ["src/content/csdn/content.ts"],
+      "run_at": "document_end"
     }
   ],
   "action": {
