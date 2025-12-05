@@ -1,0 +1,18 @@
+/* 隐藏知乎登录弹窗 */
+.Modal-wrapper,
+.signFlowModal,
+.Button.Modal-closeButton {
+  display: none !important;
+}
+
+/* 隐藏部分广告位 */
+.Pc-card,
+.TopstoryItem--advertCard {
+  display: none !important;
+}
+
+/* 允许滚动 (有些弹窗出现时会禁止页面滚动) */
+html, body {
+  overflow: auto !important;
+}
+

@@ -39,6 +39,11 @@
       "matches": ["*://*.cursor.sh/*", "*://*.cursor.com/*"],
       "js": ["src/content/cursor/content.ts"],
       "run_at": "document_end"
+    },
+    {
+      "matches": ["*://*.zhihu.com/*"],
+      "js": ["src/content/zhihu/content.ts"],
+      "run_at": "document_end"
     }
   ],
   "action": {
