@@ -33,3 +33,9 @@ jobs:
 
     - name: Build
       run: pnpm run build
+
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: chrome-extension-node${{ matrix.node-version }}
+        path: dist/
