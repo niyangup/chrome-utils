@@ -50,9 +50,16 @@ alwaysApply: true
 - 获取元素时注意判空处理。
 
 ### 3.5 Content Script 扩展规范
-- **特定站点**：针对特定网站（如 Google, GitHub）的功能，**必须**在 `src/content/` 下新建同名子目录（如 `src/content/google/`），并在其中创建 `content.ts` 和 `content.css`。
+- **特定站点**：针对特定网站（如 Google, GitHub）的功能，**必须**在 `src/content/` 下新建同名子目录（如 `src/content/google/`），并在其中创建对应的 TypeScript 和 CSS 文件。
 - **通用功能**：只有确实需要作用于所有网页的功能，才写在 `src/content/all/` 中。
-- **配置同步**：新建子目录后，记得在 `manifest.json` 的 `content_scripts` 数组中添加对应的配置项（`matches` 和 `js` 路径）。
+- **文件命名规范**：
+  - **必须**与文件夹名字保持一致，例如：
+    - `src/content/all/` → `all.ts` + `all.css`
+    - `src/content/cursor/` → `cursor.ts` + `cursor.css`
+    - `src/content/zhihu/` → `zhihu.ts` + `zhihu.css`
+  - **禁止**使用统一的 `content.ts` / `content.css` 命名。
+  - TypeScript 文件内导入 CSS 时，使用相对路径：`import './<文件夹名>.css'`（如 `import './zhihu.css'`）。
+- **配置同步**：新建子目录后，记得在 `manifest.json` 的 `content_scripts` 数组中添加对应的配置项（`matches` 和 `js` 路径，路径应为 `src/content/<文件夹名>/<文件夹名>.ts`）。
 
 ## 4. Manifest V3 注意事项
 - Background Script 是 Service Worker，**不能访问 DOM**，且会随时终止（非持久运行）。

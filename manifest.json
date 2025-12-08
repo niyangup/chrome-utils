@@ -32,22 +32,17 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["src/content/all/content.ts"],
+      "js": ["src/content/all/all.ts"],
       "run_at": "document_end"
     },
     {
       "matches": ["*://*.cursor.sh/*", "*://*.cursor.com/*"],
-      "js": ["src/content/cursor/content.ts"],
+      "js": ["src/content/cursor/cursor.ts"],
       "run_at": "document_end"
     },
     {
       "matches": ["*://*.zhihu.com/*"],
-      "js": ["src/content/zhihu/content.ts"],
-      "run_at": "document_end"
-    },
-    {
-      "matches": ["*://*.csdn.net/*"],
-      "js": ["src/content/csdn/content.ts"],
+      "js": ["src/content/zhihu/zhihu.ts"],
       "run_at": "document_end"
     }
   ],

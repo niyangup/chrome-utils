@@ -1,4 +1,4 @@
-import './content.css'
+import './all.css'
 
 // 等待 DOM 完全加载
 const init = () => {
@@ -13,4 +13,5 @@ if (document.readyState === 'loading') {
 
 // 导出供其他模块使用（如果需要）
 export {}
+
 

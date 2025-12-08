@@ -1,4 +1,4 @@
-import './content.css'
+import './zhihu.css'
 
 console.log('[Chrome Utils] Zhihu script loaded')
 
@@ -40,4 +40,5 @@ if (document.readyState === 'loading') {
 } else {
   removeLoginModal()
 }
+
 
