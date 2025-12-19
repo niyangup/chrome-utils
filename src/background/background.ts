@@ -36,6 +36,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({ pong: true, timestamp: Date.now() })
       break
 
+    case 'DOWNLOAD_FILE':
+      // 处理文件下载请求
+      handleDownloadFile(message.payload)
+        .then((result) => sendResponse(result))
+        .catch((error) => sendResponse({ success: false, error: error.message }))
+      return true // 异步响应
+
+    case 'FETCH_REQUEST':
+      // 处理跨域 fetch 请求（用于绕过 CORS）
+      handleFetchRequest(message.payload)
+        .then((result) => sendResponse(result))
+        .catch((error) => sendResponse({ success: false, error: error.message }))
+      return true // 异步响应
+
     default:
       sendResponse({ error: 'Unknown message type' })
   }
@@ -43,6 +57,69 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // 返回 true 表示会异步发送响应
   return true
 })
+
+/**
+ * 处理文件下载请求
+ */
+async function handleDownloadFile(payload: { url: string; filename: string }) {
+  try {
+    const { url, filename } = payload
+    console.log('[Chrome Utils] Downloading file:', filename, 'from:', url)
+
+    const downloadId = await chrome.downloads.download({
+      url,
+      filename,
+      saveAs: false,
+    })
+
+    console.log('[Chrome Utils] Download started, id:', downloadId)
+    return { success: true, downloadId }
+  } catch (error) {
+    console.error('[Chrome Utils] Download failed:', error)
+    throw error
+  }
+}
+
+/**
+ * 处理跨域 fetch 请求
+ */
+async function handleFetchRequest(payload: {
+  url: string
+  method: string
+  headers?: Record<string, string>
+  body?: string
+}) {
+  try {
+    const { url, method, headers, body } = payload
+    console.log('[Chrome Utils] Fetch request:', method, url)
+
+    const response = await fetch(url, {
+      method,
+      headers: headers || {},
+      body: body || undefined,
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    // 尝试解析响应
+    const contentType = response.headers.get('content-type')
+    let data: unknown = null
+
+    if (contentType?.includes('application/json')) {
+      data = await response.json()
+    } else {
+      data = await response.text()
+    }
+
+    console.log('[Chrome Utils] Fetch success:', response.status)
+    return { success: true, status: response.status, data }
+  } catch (error) {
+    console.error('[Chrome Utils] Fetch failed:', error)
+    throw error
+  }
+}
 
 // 监听标签页更新
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {

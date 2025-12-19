@@ -44,6 +44,11 @@
       "matches": ["*://*.zhihu.com/*"],
       "js": ["src/content/zhihu/zhihu.ts"],
       "run_at": "document_end"
+    },
+    {
+      "matches": ["*://alidocs.dingtalk.com/*"],
+      "js": ["src/content/dingtalk/dingtalk.ts"],
+      "run_at": "document_end"
     }
   ],
   "action": {
