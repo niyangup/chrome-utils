@@ -1,10 +1,10 @@
 /**
- * 钉钉文档相关类型定义
+ * 钉钉文档批量下载 - 类型定义
  */
 
-/**
- * 文件条目信息
- */
+// ==================== 文件信息 ====================
+
+/** 文件条目信息 */
 export interface DentryInfo {
   dentryUuid: string
   dentryKey: string
@@ -17,12 +17,16 @@ export interface DentryInfo {
   corpId?: string
 }
 
-/**
- * 文件列表 API 响应
- */
-export interface DentryListResponse {
+// ==================== API 响应 ====================
+
+/** 通用 API 响应结构 */
+interface BaseResponse {
   status: number
   isSuccess: boolean
+}
+
+/** 文件列表响应 */
+export interface DentryListResponse extends BaseResponse {
   data: {
     children: DentryInfo[]
     hasMore: boolean
@@ -30,21 +34,22 @@ export interface DentryListResponse {
   }
 }
 
-/**
- * 文件详情 API 响应
- */
-export interface DentryInfoResponse {
-  status: number
-  isSuccess: boolean
-  data: DentryInfo
+/** 权限检查响应 */
+export interface OperationGuardResponse extends BaseResponse {
+  data: { isBlocked: boolean }
 }
 
-/**
- * Upload Info API 响应
- */
-export interface UploadInfoResponse {
-  status: number
-  isSuccess: boolean
+/** 文档数据响应 */
+export interface DocumentDataResponse extends BaseResponse {
+  data: {
+    documentContent: {
+      checkpoint: { content: string; cpOssSize: number }
+    }
+  }
+}
+
+/** 上传信息响应 */
+export interface UploadInfoResponse extends BaseResponse {
   data: {
     resourceId: string
     resourceUrl: string
@@ -53,78 +58,40 @@ export interface UploadInfoResponse {
   }
 }
 
-/**
- * Operation Guard API 响应
- */
-export interface OperationGuardResponse {
-  status: number
-  isSuccess: boolean
-  data: {
-    isBlocked: boolean
-  }
+/** 导出任务状态 */
+export type ExportJobStatus = 'init' | 'processing' | 'success' | 'error' | 'failed'
+
+/** 提交导出任务响应 */
+export interface SubmitExportJobResponse extends BaseResponse {
+  data: { jobId: string; status: string }
 }
 
-/**
- * Document Data API 响应
- */
-export interface DocumentDataResponse {
-  status: number
-  isSuccess: boolean
-  data: {
-    documentContent: {
-      checkpoint: {
-        content: string
-        cpOssSize: number
-      }
-    }
-  }
+/** 查询导出任务响应 */
+export interface QueryExportJobInfoResponse extends BaseResponse {
+  data: { jobId: string; status: ExportJobStatus; ossUrl?: string }
 }
 
-/**
- * Submit Export Job API 响应
- */
-export interface SubmitExportJobResponse {
-  status: number
-  isSuccess: boolean
-  data: {
-    jobId: string
-    status: string
-  }
-}
+// ==================== 下载状态 ====================
 
-/**
- * Query Export Job Info API 响应
- */
-export interface QueryExportJobInfoResponse {
-  status: number
-  isSuccess: boolean
-  data: {
-    jobId: string
-    status: 'init' | 'processing' | 'success' | 'error' | 'failed'
-    ossUrl?: string
-  }
-}
+/** 下载任务状态 */
+export type DownloadTaskStatus = 
+  | 'pending' 
+  | 'fetching_info' 
+  | 'exporting' 
+  | 'downloading' 
+  | 'completed' 
+  | 'error'
 
-/**
- * 下载任务状态
- */
-export type DownloadTaskStatus = 'pending' | 'fetching_info' | 'exporting' | 'downloading' | 'completed' | 'error'
-
-/**
- * 下载任务
- */
+/** 下载任务 */
 export interface DownloadTask {
   id: string
   file: DentryInfo
   status: DownloadTaskStatus
-  progress: number
   error?: string
   ossUrl?: string
 }
 
-/**
- * 批量下载状态
- */
+/** 批量下载状态 */
 export interface BatchDownloadState {
   isRunning: boolean
   tasks: DownloadTask[]
@@ -132,3 +99,12 @@ export interface BatchDownloadState {
   errorCount: number
   totalCount: number
 }
+
+/** 初始状态 */
+export const createInitialState = (): BatchDownloadState => ({
+  isRunning: false,
+  tasks: [],
+  completedCount: 0,
+  errorCount: 0,
+  totalCount: 0,
+})
