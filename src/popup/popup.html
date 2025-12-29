@@ -4,10 +4,28 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chrome Utils</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
+  <div class="popup-header">
+    <h1>Chrome Utils</h1>
+    <p>快捷工具入口</p>
+  </div>
+
+  <div class="shortcuts-section">
+    <div class="section-title">快捷入口</div>
+    <div class="shortcut-list" id="shortcut-list">
+      <!-- 动态生成 -->
+    </div>
+  </div>
+
+  <div class="popup-footer">
+    <a href="#" id="settings-link">设置</a>
+  </div>
+
   <script type="module" src="popup.ts"></script>
 </body>
 </html>
-

@@ -1,0 +1,191 @@
+/**
+ * Chrome Utils Popup 样式
+ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 320px;
+  font-family: 'DM Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: #f5f7fa;
+}
+
+/* 头部 */
+.popup-header {
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+  color: white;
+  padding: 16px;
+  text-align: center;
+}
+
+.popup-header h1 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.popup-header p {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* 快捷入口区域 */
+.shortcuts-section {
+  padding: 12px;
+}
+
+.section-title {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 8px;
+  padding-left: 4px;
+}
+
+/* 入口列表 */
+.shortcut-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.shortcut-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid #e8e8e8;
+}
+
+.shortcut-item:hover {
+  border-color: #1890ff;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.shortcut-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.shortcut-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.shortcut-icon.dingtalk {
+  background: #0089ff;
+  color: white;
+}
+
+.shortcut-icon.default {
+  background: #f0f0f0;
+  color: #666;
+}
+
+.shortcut-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.shortcut-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.shortcut-desc {
+  font-size: 12px;
+  color: #999;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shortcut-actions {
+  display: flex;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+.shortcut-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.shortcut-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.shortcut-btn.open {
+  background: #f0f0f0;
+  color: #666;
+}
+
+.shortcut-btn.open:hover {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.shortcut-btn.download {
+  background: #e6f7ff;
+  color: #1890ff;
+}
+
+.shortcut-btn.download:hover {
+  background: #1890ff;
+  color: white;
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 32px 16px;
+  color: #999;
+}
+
+.empty-state svg {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 12px;
+  color: #d9d9d9;
+}
+
+/* 底部 */
+.popup-footer {
+  padding: 12px;
+  text-align: center;
+  border-top: 1px solid #e8e8e8;
+  background: white;
+}
+
+.popup-footer a {
+  font-size: 12px;
+  color: #1890ff;
+  text-decoration: none;
+}
+
+.popup-footer a:hover {
+  text-decoration: underline;
+}

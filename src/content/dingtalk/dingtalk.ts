@@ -34,6 +34,19 @@ const isTargetPage = (): boolean => {
   return getFolderUuidFromUrl() === TARGET_FOLDER_UUID
 }
 
+/** 检查是否需要自动下载 */
+const shouldAutoDownload = (): boolean => {
+  const params = new URLSearchParams(window.location.search)
+  return params.get('auto_download') === '1'
+}
+
+/** 清除 URL 中的自动下载参数 */
+const clearAutoDownloadParam = () => {
+  const url = new URL(window.location.href)
+  url.searchParams.delete('auto_download')
+  window.history.replaceState({}, '', url.toString())
+}
+
 // ==================== 事件处理 ====================
 
 /** 处理按钮点击 */
@@ -159,7 +172,7 @@ const handleClose = () => {
 // ==================== 生命周期 ====================
 
 /** 初始化 */
-const init = () => {
+const init = async () => {
   if (!isTargetPage()) {
     console.log('[DingTalk] 非目标页面，跳过初始化')
     return
@@ -172,6 +185,18 @@ const init = () => {
 
   document.body.appendChild(downloadBtn)
   document.body.appendChild(downloadPanel)
+
+  // 检查是否需要自动下载
+  if (shouldAutoDownload()) {
+    console.log('[DingTalk] 检测到自动下载参数，开始自动下载')
+    clearAutoDownloadParam()
+
+    // 等待页面稳定后自动开始
+    await delay(1000)
+    await handleButtonClick() // 先获取文件列表
+    await delay(500)
+    handleStartDownload() // 然后开始下载
+  }
 }
 
 /** 清理 */
