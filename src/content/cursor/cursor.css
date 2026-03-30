@@ -3,7 +3,9 @@
 /*}*/
 
 
-.dashboard-table-container {
-  font-weight: bold;
+@media (prefers-color-scheme: light) {
+  .dashboard-table-container {
+    font-weight: bold;
+  }
 }
 
