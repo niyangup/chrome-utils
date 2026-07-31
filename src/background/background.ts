@@ -5,6 +5,14 @@
  * 可以监听浏览器事件、处理跨页面通信等
  */
 
+const API_USAGE_URL = 'https://5spiritual.com/api/usage/token/'
+
+interface ApiUsageFetchResult {
+  success: true
+  status: number
+  data: unknown
+}
+
 // 插件安装时触发
 chrome.runtime.onInstalled.addListener((details) => {
   console.log('[Chrome Utils] Extension installed', details.reason)
@@ -20,7 +28,7 @@ chrome.runtime.onInstalled.addListener((details) => {
 
 // 监听来自 Content Script 或 Popup 的消息
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('[Chrome Utils] Message received:', message, 'from:', sender)
+  console.log('[Chrome Utils] Message received:', message.type, 'from:', sender)
 
   // 处理不同类型的消息
   switch (message.type) {
@@ -50,6 +58,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         .catch((error) => sendResponse({ success: false, error: error.message }))
       return true // 异步响应
 
+    case 'GET_API_USAGE':
+      handleApiUsageRequest(message.payload)
+        .then((result) => sendResponse(result))
+        .catch((error) => sendResponse({ success: false, error: error.message }))
+      return true
+
     default:
       sendResponse({ error: 'Unknown message type' })
   }
@@ -77,6 +91,31 @@ async function handleDownloadFile(payload: { url: string; filename: string }) {
   } catch (error) {
     console.error('[Chrome Utils] Download failed:', error)
     throw error
+  }
+}
+
+/**
+ * 查询固定账号接口，避免调用方传入任意认证请求地址。
+ */
+async function handleApiUsageRequest(payload: { apiKey?: string }): Promise<ApiUsageFetchResult> {
+  const apiKey = payload?.apiKey?.trim()
+  if (!apiKey) throw new Error('API key is required')
+
+  const response = await fetch(API_USAGE_URL, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+  }
+
+  return {
+    success: true,
+    status: response.status,
+    data: await response.json(),
   }
 }
 
@@ -131,4 +170,3 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
 // 导出空对象以确保这是一个模块
 export {}
-

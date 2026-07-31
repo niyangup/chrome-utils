@@ -2,6 +2,17 @@
  * Chrome Utils Popup
  */
 
+import {
+  cacheUsage,
+  createUsageViewModel,
+  getUsageErrorMessage,
+  loadApiKey,
+  loadCachedUsage,
+  queryApiUsage,
+  saveApiKey,
+} from './apiUsage'
+import type { CachedUsageSnapshot } from './apiUsage'
+
 // ==================== 快捷入口配置 ====================
 
 interface ShortcutItem {
@@ -52,10 +63,206 @@ const Icons = {
   `,
 }
 
+// ==================== API 用量 ====================
+
+type UsagePanelState = 'empty' | 'loading' | 'summary' | 'error' | 'form'
+
+const getRequiredElement = <T extends HTMLElement>(id: string): T => {
+  const element = document.getElementById(id)
+  if (!element) throw new Error(`Missing popup element: ${id}`)
+  return element as T
+}
+
+const formatUpdatedAt = (queriedAt: number): string => {
+  const elapsed = Math.max(Date.now() - queriedAt, 0)
+  if (elapsed < 60000) return '刚刚更新'
+  if (elapsed < 3600000) return `${Math.floor(elapsed / 60000)} 分钟前更新`
+
+  return `${new Intl.DateTimeFormat('zh-CN', {
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(queriedAt)} 更新`
+}
+
+const initializeUsagePanel = async (): Promise<void> => {
+  const elements = {
+    section: getRequiredElement<HTMLElement>('usage-section'),
+    refresh: getRequiredElement<HTMLButtonElement>('usage-refresh'),
+    edit: getRequiredElement<HTMLButtonElement>('usage-edit'),
+    empty: getRequiredElement<HTMLElement>('usage-empty'),
+    configure: getRequiredElement<HTMLButtonElement>('usage-configure'),
+    loading: getRequiredElement<HTMLElement>('usage-loading'),
+    summary: getRequiredElement<HTMLElement>('usage-summary'),
+    available: getRequiredElement<HTMLElement>('usage-available'),
+    progress: getRequiredElement<HTMLElement>('usage-progress'),
+    progressFill: getRequiredElement<HTMLElement>('usage-progress-fill'),
+    percentage: getRequiredElement<HTMLElement>('usage-percentage'),
+    used: getRequiredElement<HTMLElement>('usage-used'),
+    granted: getRequiredElement<HTMLElement>('usage-granted'),
+    updatedAt: getRequiredElement<HTMLElement>('usage-updated-at'),
+    error: getRequiredElement<HTMLElement>('usage-error'),
+    form: getRequiredElement<HTMLFormElement>('usage-form'),
+    input: getRequiredElement<HTMLInputElement>('api-key-input'),
+    visibility: getRequiredElement<HTMLButtonElement>('api-key-visibility'),
+    cancel: getRequiredElement<HTMLButtonElement>('api-key-cancel'),
+    save: getRequiredElement<HTMLButtonElement>('api-key-save'),
+  }
+
+  let apiKey = ''
+  let currentSnapshot: CachedUsageSnapshot | undefined
+  let lastError = ''
+  let requestVersion = 0
+
+  const setState = (state: UsagePanelState): void => {
+    elements.empty.hidden = state !== 'empty'
+    elements.loading.hidden = state !== 'loading'
+    elements.summary.hidden = state !== 'summary'
+    elements.error.hidden = state !== 'error'
+    elements.form.hidden = state !== 'form'
+
+    const hasConfiguredKey = Boolean(apiKey) && state !== 'form'
+    elements.refresh.hidden = !hasConfiguredKey
+    elements.edit.hidden = !hasConfiguredKey
+  }
+
+  const setRefreshing = (isRefreshing: boolean): void => {
+    elements.section.classList.toggle('is-loading', isRefreshing)
+    elements.refresh.disabled = isRefreshing
+  }
+
+  const renderSummary = (snapshot: CachedUsageSnapshot, statusMessage = ''): void => {
+    const viewModel = createUsageViewModel(snapshot.data)
+    elements.section.dataset.level = viewModel.level
+    elements.available.textContent = viewModel.available
+    elements.used.textContent = viewModel.used
+    elements.granted.textContent = viewModel.granted
+    elements.percentage.textContent = `已用 ${viewModel.usedPercentage.toFixed(1)}%`
+    elements.progress.setAttribute('aria-valuenow', String(viewModel.usedPercentage))
+    elements.progressFill.style.width = `${viewModel.progressPercentage}%`
+    elements.updatedAt.textContent = statusMessage
+      ? `${statusMessage} · ${formatUpdatedAt(snapshot.queriedAt)}`
+      : formatUpdatedAt(snapshot.queriedAt)
+    elements.updatedAt.classList.toggle('is-error', Boolean(statusMessage))
+    setState('summary')
+  }
+
+  const showError = (message: string): void => {
+    lastError = message
+    if (currentSnapshot) {
+      renderSummary(currentSnapshot, message)
+      return
+    }
+
+    elements.error.textContent = message
+    setState('error')
+  }
+
+  const refreshUsage = async (): Promise<void> => {
+    if (!apiKey) {
+      setState('empty')
+      return
+    }
+
+    const currentRequest = ++requestVersion
+    setRefreshing(true)
+    if (currentSnapshot) {
+      renderSummary(currentSnapshot)
+    } else {
+      setState('loading')
+    }
+
+    try {
+      const snapshot = await queryApiUsage(apiKey)
+      if (currentRequest !== requestVersion) return
+
+      await cacheUsage(snapshot)
+      currentSnapshot = snapshot
+      lastError = ''
+      renderSummary(snapshot)
+    } catch (error) {
+      if (currentRequest !== requestVersion) return
+      showError(getUsageErrorMessage(error))
+    } finally {
+      if (currentRequest === requestVersion) setRefreshing(false)
+    }
+  }
+
+  const openEditor = (): void => {
+    requestVersion += 1
+    setRefreshing(false)
+    elements.input.value = apiKey
+    elements.input.type = 'password'
+    elements.visibility.textContent = '显示'
+    setState('form')
+    elements.input.focus()
+  }
+
+  const closeEditor = (): void => {
+    if (currentSnapshot) {
+      renderSummary(currentSnapshot, lastError)
+    } else if (lastError) {
+      showError(lastError)
+    } else if (apiKey) {
+      void refreshUsage()
+    } else {
+      setState('empty')
+    }
+  }
+
+  elements.configure.addEventListener('click', openEditor)
+  elements.edit.addEventListener('click', openEditor)
+  elements.refresh.addEventListener('click', () => void refreshUsage())
+  elements.cancel.addEventListener('click', closeEditor)
+
+  elements.visibility.addEventListener('click', () => {
+    const shouldShow = elements.input.type === 'password'
+    elements.input.type = shouldShow ? 'text' : 'password'
+    elements.visibility.textContent = shouldShow ? '隐藏' : '显示'
+  })
+
+  elements.form.addEventListener('submit', (event) => {
+    event.preventDefault()
+    const nextKey = elements.input.value.trim()
+    if (!nextKey) {
+      elements.input.setCustomValidity('请输入 API key')
+      elements.input.reportValidity()
+      return
+    }
+
+    elements.input.setCustomValidity('')
+    elements.save.disabled = true
+    void saveApiKey(nextKey)
+      .then((savedKey) => {
+        apiKey = savedKey
+        currentSnapshot = undefined
+        lastError = ''
+        return refreshUsage()
+      })
+      .catch((error) => showError(getUsageErrorMessage(error)))
+      .finally(() => {
+        elements.save.disabled = false
+      })
+  })
+
+  ;[apiKey, currentSnapshot] = await Promise.all([
+    loadApiKey(),
+    loadCachedUsage(),
+  ])
+
+  if (!apiKey) {
+    currentSnapshot = undefined
+    setState('empty')
+    return
+  }
+
+  if (currentSnapshot) renderSummary(currentSnapshot)
+  await refreshUsage()
+}
+
 // ==================== 渲染 ====================
 
 /** 渲染快捷入口列表 */
-const renderShortcuts = () => {
+const renderShortcuts = (): void => {
   const listEl = document.getElementById('shortcut-list')
   if (!listEl) return
 
@@ -129,6 +336,9 @@ const renderShortcuts = () => {
 document.addEventListener('DOMContentLoaded', () => {
   console.log('[Chrome Utils] Popup loaded')
   renderShortcuts()
+  void initializeUsagePanel().catch((error) => {
+    console.error('[Chrome Utils] Failed to initialize API usage panel:', error)
+  })
 
   // 设置链接
   document.getElementById('settings-link')?.addEventListener('click', (e) => {

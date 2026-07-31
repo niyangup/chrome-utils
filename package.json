@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --test --experimental-strip-types tests/apiUsage.test.ts"
   },
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.0.0-beta.25",

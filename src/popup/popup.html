@@ -15,6 +15,52 @@
     <p>快捷工具入口</p>
   </div>
 
+  <section class="usage-section" id="usage-section" aria-labelledby="usage-title">
+    <div class="usage-header">
+      <h2 id="usage-title">API 用量</h2>
+      <div class="usage-actions">
+        <button class="icon-button" id="usage-refresh" type="button" title="刷新额度" aria-label="刷新额度" hidden>↻</button>
+        <button class="icon-button" id="usage-edit" type="button" title="修改 API key" aria-label="修改 API key" hidden>✎</button>
+      </div>
+    </div>
+
+    <div class="usage-empty" id="usage-empty">
+      <button class="primary-button" id="usage-configure" type="button">配置 API key</button>
+    </div>
+
+    <div class="usage-loading" id="usage-loading" role="status" hidden>正在查询...</div>
+
+    <div class="usage-summary" id="usage-summary" hidden>
+      <div class="usage-progress-row">
+        <div class="usage-progress" id="usage-progress" role="progressbar" aria-label="已用额度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div class="usage-progress-fill" id="usage-progress-fill"></div>
+        </div>
+        <span class="usage-percentage" id="usage-percentage">已用 0.0%</span>
+      </div>
+      <div class="usage-meta">
+        <span class="usage-quota-detail">
+          <span><span id="usage-used">$0.00</span> / <span id="usage-granted">$0.00</span></span>
+          <span>剩余：<strong id="usage-available">$0.00</strong></span>
+        </span>
+        <span id="usage-updated-at">刚刚更新</span>
+      </div>
+    </div>
+
+    <div class="usage-error" id="usage-error" role="alert" hidden>查询失败</div>
+
+    <form class="usage-form" id="usage-form" hidden>
+      <label class="sr-only" for="api-key-input">API key</label>
+      <div class="api-key-field">
+        <input id="api-key-input" type="password" autocomplete="off" spellcheck="false" placeholder="sk-..." required>
+        <button class="visibility-button" id="api-key-visibility" type="button">显示</button>
+      </div>
+      <div class="usage-form-actions">
+        <button class="secondary-button" id="api-key-cancel" type="button">取消</button>
+        <button class="primary-button" id="api-key-save" type="submit">保存</button>
+      </div>
+    </form>
+  </section>
+
   <div class="shortcuts-section">
     <div class="section-title">快捷入口</div>
     <div class="shortcut-list" id="shortcut-list">
