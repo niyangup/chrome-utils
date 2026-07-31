@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to coding agents working in this repository.
 
 ## 常用命令
 
@@ -44,3 +44,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 新增站点功能时，在 `src/content/<site>/` 下创建同名文件：`<site>.ts` 和 `<site>.css`，TS 中用 `import './<site>.css'` 引入样式。
 - 新增 Content Script 后必须同步更新根目录 `manifest.json` 的 `content_scripts`，`js` 路径应指向 `src/content/<site>/<site>.ts`。
 - 只有确实需要作用于所有网页的功能才放入 `src/content/all/`。
+
+## Agent skills
+
+### Issue tracker
+
+Issues and PRDs live in GitHub Issues for `niyangup/chrome-utils`; use the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+This is a single-context repo; domain context belongs in root `CONTEXT.md` and ADRs in `docs/adr/`. See `docs/agents/domain.md`.
