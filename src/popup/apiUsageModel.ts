@@ -58,9 +58,9 @@ export const createUsageViewModel = (data: ApiUsageData): UsageViewModel => {
     : (data.total_used / data.total_granted) * 100
   const usedPercentage = Math.round(rawPercentage * 10) / 10
   const progressPercentage = Math.min(usedPercentage, 100)
-  const level = rawPercentage > 90
+  const level = rawPercentage > 95
     ? 'critical'
-    : rawPercentage >= 70
+    : rawPercentage > 90
       ? 'warning'
       : 'healthy'
 
@@ -76,7 +76,33 @@ export const createUsageViewModel = (data: ApiUsageData): UsageViewModel => {
 
 export const getUsageErrorMessage = (error: unknown): string => {
   const message = error instanceof Error ? error.message : ''
-  return /\b(401|403)\b|unauthorized|invalid api key/i.test(message)
-    ? 'API key 无效'
-    : '查询失败'
+  const statusCode = message.match(/\bHTTP\s+(\d{3})\b/i)?.[1]
+  const withStatus = (text: string): string =>
+    statusCode ? `${text}（${statusCode}）` : text
+
+  if (/\b(401|403)\b|unauthorized|invalid api key|invalid token/i.test(message)) {
+    return 'API key 无效'
+  }
+
+  if (/\b429\b|too many requests|rate[- ]?limit/i.test(message)) {
+    return withStatus('请求过于频繁，请稍后重试')
+  }
+
+  if (/\b(?:408|5\d{2})\b|bad gateway|service unavailable|gateway timeout|timed out|timeout/i.test(message)) {
+    return withStatus('服务暂时不可用，请稍后重试')
+  }
+
+  if (/receiving end does not exist|message port closed|extension context invalidated|could not establish connection/i.test(message)) {
+    return '扩展后台未响应，请重新加载扩展'
+  }
+
+  if (/failed to fetch|network error|networkerror|connection|dns|name not resolved/i.test(message)) {
+    return '网络连接失败，请检查网络'
+  }
+
+  if (/invalid usage response|usage request failed|unexpected token|json/i.test(message)) {
+    return '接口响应异常，请稍后重试'
+  }
+
+  return '查询失败'
 }

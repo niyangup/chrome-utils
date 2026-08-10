@@ -164,6 +164,13 @@ body {
   font-size: 10px;
 }
 
+.usage-meta > #usage-updated-at {
+  min-width: 0;
+  max-width: 44%;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
 .usage-quota-detail {
   display: flex;
   align-items: center;

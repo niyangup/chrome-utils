@@ -7,6 +7,9 @@
 
 const API_USAGE_URL = 'https://5spiritual.com/api/usage/token/'
 
+const getErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : 'Unknown API usage error'
+
 interface ApiUsageFetchResult {
   success: true
   status: number
@@ -61,7 +64,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case 'GET_API_USAGE':
       handleApiUsageRequest(message.payload)
         .then((result) => sendResponse(result))
-        .catch((error) => sendResponse({ success: false, error: error.message }))
+        .catch((error: unknown) => {
+          const errorMessage = getErrorMessage(error)
+          console.error('[Chrome Utils] API usage request failed:', errorMessage)
+          sendResponse({ success: false, error: errorMessage })
+        })
       return true
 
     default:

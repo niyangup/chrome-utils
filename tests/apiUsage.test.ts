@@ -40,15 +40,19 @@ test('uses warning and critical levels at the agreed thresholds', () => {
   const baseData = usageResponse.data
 
   assert.equal(
-    createUsageViewModel({ ...baseData, total_used: 70, total_granted: 100 }).level,
-    'warning'
-  )
-  assert.equal(
     createUsageViewModel({ ...baseData, total_used: 90, total_granted: 100 }).level,
-    'warning'
+    'healthy'
   )
   assert.equal(
     createUsageViewModel({ ...baseData, total_used: 91, total_granted: 100 }).level,
+    'warning'
+  )
+  assert.equal(
+    createUsageViewModel({ ...baseData, total_used: 95, total_granted: 100 }).level,
+    'warning'
+  )
+  assert.equal(
+    createUsageViewModel({ ...baseData, total_used: 96, total_granted: 100 }).level,
     'critical'
   )
 })
@@ -57,11 +61,15 @@ test('classifies thresholds before rounding the displayed percentage', () => {
   const baseData = usageResponse.data
 
   assert.equal(
-    createUsageViewModel({ ...baseData, total_used: 6996, total_granted: 10000 }).level,
+    createUsageViewModel({ ...baseData, total_used: 8496, total_granted: 10000 }).level,
     'healthy'
   )
   assert.equal(
-    createUsageViewModel({ ...baseData, total_used: 9004, total_granted: 10000 }).level,
+    createUsageViewModel({ ...baseData, total_used: 9096, total_granted: 10000 }).level,
+    'warning'
+  )
+  assert.equal(
+    createUsageViewModel({ ...baseData, total_used: 9504, total_granted: 10000 }).level,
     'critical'
   )
 })
@@ -93,7 +101,29 @@ test('turns authorization failures into an actionable key error', () => {
   assert.equal(getUsageErrorMessage(new Error('invalid api key')), 'API key 无效')
 })
 
-test('uses a concise fallback for other query failures', () => {
-  assert.equal(getUsageErrorMessage(new Error('Failed to fetch')), '查询失败')
+test('classifies rate-limit, server, network, and response errors', () => {
+  assert.equal(
+    getUsageErrorMessage(new Error('HTTP 429: Too Many Requests')),
+    '请求过于频繁，请稍后重试（429）'
+  )
+  assert.equal(
+    getUsageErrorMessage(new Error('HTTP 503: Service Unavailable')),
+    '服务暂时不可用，请稍后重试（503）'
+  )
+  assert.equal(
+    getUsageErrorMessage(new Error('Failed to fetch')),
+    '网络连接失败，请检查网络'
+  )
+  assert.equal(
+    getUsageErrorMessage(new Error('Could not establish connection. Receiving end does not exist.')),
+    '扩展后台未响应，请重新加载扩展'
+  )
+  assert.equal(
+    getUsageErrorMessage(new Error('Invalid usage response')),
+    '接口响应异常，请稍后重试'
+  )
+})
+
+test('keeps a concise fallback for unknown failures', () => {
   assert.equal(getUsageErrorMessage('unknown'), '查询失败')
 })
