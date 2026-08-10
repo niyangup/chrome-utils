@@ -20,7 +20,6 @@ const observer = new MutationObserver((mutations) => {
   for (const mutation of mutations) {
     if (mutation.type === 'childList') {
       // 检查是否有弹窗相关的类名出现
-      const target = mutation.target as HTMLElement
       if (document.querySelector('.Modal-wrapper')) {
         removeLoginModal()
       }
@@ -40,7 +39,6 @@ if (document.readyState === 'loading') {
 } else {
   removeLoginModal()
 }
-
 
 
 

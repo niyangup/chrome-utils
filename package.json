@@ -10,10 +10,10 @@
     "test": "node --test --experimental-strip-types tests/apiUsage.test.ts"
   },
   "devDependencies": {
-    "@crxjs/vite-plugin": "^2.0.0-beta.25",
-    "@types/chrome": "^0.0.268",
-    "typescript": "^5.4.5",
-    "vite": "^5.2.11"
+    "@crxjs/vite-plugin": "^2.7.1",
+    "@types/chrome": "^0.2.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.1"
   },
   "private": true,
   "dependencies": {
