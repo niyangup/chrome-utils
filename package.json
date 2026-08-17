@@ -7,11 +7,14 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node --test --experimental-strip-types tests/apiUsage.test.ts"
+    "test": "node --test --experimental-strip-types tests/apiUsage.test.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint src tests vite.config.ts --deny-warnings --format unix"
   },
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.7.1",
     "@types/chrome": "^0.2.6",
+    "oxlint": "^1.78.0",
     "typescript": "^7.0.2",
     "vite": "^8.2.1"
   },
