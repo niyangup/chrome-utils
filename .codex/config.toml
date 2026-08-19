@@ -1,2 +1,6 @@
-  [mcp_servers.webstorm]
-    url = "http://127.0.0.1:64542/stream"
+[mcp_servers.webstorm]
+url = "http://127.0.0.1:64542/stream"
+
+[mcp_servers.codegraph]
+command = "codegraph"
+args = ["serve", "--mcp", "--path", "/Users/niyangup/WorkSpace/WebStormProjects/chrome-utils"]
