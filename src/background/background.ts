@@ -6,11 +6,12 @@
  */
 
 const API_USAGE_URL = 'https://5spiritual.com/api/usage/token/'
+const SUBSCRIPTION_USAGE_URL = 'https://opencode.ai/zen/go/v1/usage'
 
 const getErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : 'Unknown API usage error'
 
-interface ApiUsageFetchResult {
+interface BearerFetchResult {
   success: true
   status: number
   data: unknown
@@ -71,6 +72,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         })
       return true
 
+    case 'GET_SUBSCRIPTION_USAGE':
+      handleSubscriptionUsageRequest(message.payload)
+        .then((result) => sendResponse(result))
+        .catch((error: unknown) => {
+          const errorMessage = getErrorMessage(error)
+          console.error('[Chrome Utils] Subscription usage request failed:', errorMessage)
+          sendResponse({ success: false, error: errorMessage })
+        })
+      return true
+
     default:
       sendResponse({ error: 'Unknown message type' })
   }
@@ -104,14 +115,33 @@ async function handleDownloadFile(payload: { url: string; filename: string }) {
 /**
  * 查询固定账号接口，避免调用方传入任意认证请求地址。
  */
-async function handleApiUsageRequest(payload: { apiKey?: string }): Promise<ApiUsageFetchResult> {
+async function handleApiUsageRequest(payload: { apiKey?: string }): Promise<BearerFetchResult> {
   const apiKey = payload?.apiKey?.trim()
   if (!apiKey) throw new Error('API key is required')
 
-  const response = await fetch(API_USAGE_URL, {
+  return await fetchBearerJson(API_USAGE_URL, apiKey)
+}
+
+/**
+ * 查询 OpenCode 订阅接口，避免调用方传入任意认证请求地址。
+ */
+async function handleSubscriptionUsageRequest(
+  payload: { accessToken?: string }
+): Promise<BearerFetchResult> {
+  const accessToken = payload?.accessToken?.trim()
+  if (!accessToken) throw new Error('Access token is required')
+
+  return await fetchBearerJson(SUBSCRIPTION_USAGE_URL, accessToken)
+}
+
+const fetchBearerJson = async (
+  url: string,
+  token: string
+): Promise<BearerFetchResult> => {
+  const response = await fetch(url, {
     method: 'GET',
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${token}`,
     },
   })
 

@@ -6,13 +6,15 @@ export interface ApiUsageData {
   total_used: number
 }
 
+export type UsageLevel = 'healthy' | 'warning' | 'critical' | 'error'
+
 export interface UsageViewModel {
   available: string
   used: string
   granted: string
   usedPercentage: number
   progressPercentage: number
-  level: 'healthy' | 'warning' | 'critical'
+  level: UsageLevel
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -52,17 +54,23 @@ export const parseUsageResponse = (response: unknown): ApiUsageData => {
 const formatDollars = (rawQuota: number): string =>
   `$${(rawQuota / RAW_QUOTA_PER_DOLLAR).toFixed(2)}`
 
+export const clampPercentage = (percentage: number): number =>
+  Math.min(Math.max(percentage, 0), 100)
+
+export const getUsageLevel = (rawPercentage: number): Exclude<UsageLevel, 'error'> =>
+  rawPercentage > 95
+    ? 'critical'
+    : rawPercentage > 90
+      ? 'warning'
+      : 'healthy'
+
 export const createUsageViewModel = (data: ApiUsageData): UsageViewModel => {
   const rawPercentage = data.total_granted === 0
     ? 0
     : (data.total_used / data.total_granted) * 100
   const usedPercentage = Math.round(rawPercentage * 10) / 10
-  const progressPercentage = Math.min(usedPercentage, 100)
-  const level = rawPercentage > 95
-    ? 'critical'
-    : rawPercentage > 90
-      ? 'warning'
-      : 'healthy'
+  const progressPercentage = clampPercentage(usedPercentage)
+  const level = getUsageLevel(rawPercentage)
 
   return {
     available: formatDollars(data.total_available),
@@ -74,14 +82,17 @@ export const createUsageViewModel = (data: ApiUsageData): UsageViewModel => {
   }
 }
 
-export const getUsageErrorMessage = (error: unknown): string => {
+export const getUsageErrorMessage = (
+  error: unknown,
+  credentialLabel = 'API key'
+): string => {
   const message = error instanceof Error ? error.message : ''
   const statusCode = message.match(/\bHTTP\s+(\d{3})\b/i)?.[1]
   const withStatus = (text: string): string =>
     statusCode ? `${text}（${statusCode}）` : text
 
   if (/\b(401|403)\b|unauthorized|invalid api key|invalid token/i.test(message)) {
-    return 'API key 无效'
+    return `${credentialLabel} 无效`
   }
 
   if (/\b429\b|too many requests|rate[- ]?limit/i.test(message)) {

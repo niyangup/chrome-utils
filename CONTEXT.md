@@ -22,6 +22,19 @@ The user's personal bearer credential for the usage API. It is configured in
 the API usage panel and stored only in the extension's local storage. See
 [ADR-0001](docs/adr/0001-store-personal-api-credentials-locally.md).
 
+### Subscription usage panel
+
+A persistent summary below the API usage panel that shows the configured
+OpenCode subscription's five-hour and seven-day capacity. It is an independent
+panel with its own access token, cache, and error state, but shares the API
+usage panel's manual refresh action.
+
+### Subscription access token
+
+The user's bearer credential for the fixed OpenCode subscription usage
+endpoint. It is edited in the subscription usage panel and stored only in
+local storage under a separate key from the API key.
+
 ### Granted quota
 
 The maximum usable quota reported by the API as `total_granted`.
@@ -46,6 +59,18 @@ decimal places.
 The proportion of granted quota already consumed:
 `total_used / total_granted * 100`. Display it to one decimal place and use it
 as the progress bar value.
+
+### Rolling usage
+
+OpenCode's five-hour window. Its `percent` value means the proportion already
+used. The subscription usage panel uses it for the progress bar and primary
+"已用" percentage.
+
+### Weekly remaining quota
+
+OpenCode's seven-day window. Its `percent` value means the proportion
+remaining, so the subscription usage panel displays it directly as the `7d`
+value beneath the progress bar.
 
 ### Cached usage snapshot
 

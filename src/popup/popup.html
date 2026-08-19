@@ -61,6 +61,51 @@
     </form>
   </section>
 
+  <section class="usage-section subscription-section" id="subscription-section" aria-labelledby="subscription-title">
+    <div class="usage-header">
+      <h2 id="subscription-title">订阅</h2>
+      <div class="usage-actions">
+        <button class="icon-button" id="subscription-edit" type="button" title="修改订阅 Token" aria-label="修改订阅 Token" hidden>✎</button>
+      </div>
+    </div>
+
+    <div class="usage-empty" id="subscription-empty">
+      <button class="primary-button" id="subscription-configure" type="button">配置 Token</button>
+    </div>
+
+    <div class="usage-loading" id="subscription-loading" role="status" hidden>正在查询...</div>
+
+    <div class="usage-summary" id="subscription-summary" hidden>
+      <div class="usage-progress-row">
+        <div class="usage-progress" id="subscription-progress" role="progressbar" aria-label="5 小时已用额度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div class="usage-progress-fill" id="subscription-progress-fill"></div>
+        </div>
+        <span class="usage-percentage" id="subscription-percentage">已用 0.0%</span>
+      </div>
+      <div class="usage-meta subscription-meta">
+        <span class="subscription-remaining">
+          <span>5h: <strong id="subscription-five-hour-remaining">0%</strong></span>
+          <span>7d: <strong id="subscription-weekly-remaining">0%</strong></span>
+        </span>
+        <span id="subscription-status">刚刚更新</span>
+      </div>
+    </div>
+
+    <div class="usage-error" id="subscription-error" role="alert" hidden>查询失败</div>
+
+    <form class="usage-form" id="subscription-form" hidden>
+      <label class="sr-only" for="subscription-token-input">订阅 Token</label>
+      <div class="api-key-field">
+        <input id="subscription-token-input" type="password" autocomplete="off" spellcheck="false" placeholder="access token" required>
+        <button class="visibility-button" id="subscription-token-visibility" type="button">显示</button>
+      </div>
+      <div class="usage-form-actions">
+        <button class="secondary-button" id="subscription-token-cancel" type="button">取消</button>
+        <button class="primary-button" id="subscription-token-save" type="submit">保存</button>
+      </div>
+    </form>
+  </section>
+
   <div class="shortcuts-section">
     <div class="section-title">快捷入口</div>
     <div class="shortcut-list" id="shortcut-list">

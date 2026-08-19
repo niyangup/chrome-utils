@@ -12,6 +12,16 @@ import {
   saveApiKey,
 } from './apiUsage'
 import type { CachedUsageSnapshot } from './apiUsage'
+import {
+  cacheSubscriptionUsage,
+  createSubscriptionUsageViewModel,
+  getSubscriptionUsageErrorMessage,
+  loadAccessToken,
+  loadCachedSubscriptionUsage,
+  querySubscriptionUsage,
+  saveAccessToken,
+} from './subscriptionUsage'
+import type { CachedSubscriptionUsageSnapshot } from './subscriptionUsage'
 
 // ==================== 快捷入口配置 ====================
 
@@ -84,10 +94,17 @@ const formatUpdatedAt = (queriedAt: number): string => {
   }).format(queriedAt)} 更新`
 }
 
-const initializeUsagePanel = async (): Promise<void> => {
+interface UsagePanelController {
+  refresh: () => Promise<void>
+}
+
+type ConfigurationChangeHandler = (isConfigured: boolean) => void
+
+const initializeUsagePanel = async (
+  onConfigurationChange: ConfigurationChangeHandler
+): Promise<UsagePanelController> => {
   const elements = {
     section: getRequiredElement<HTMLElement>('usage-section'),
-    refresh: getRequiredElement<HTMLButtonElement>('usage-refresh'),
     edit: getRequiredElement<HTMLButtonElement>('usage-edit'),
     empty: getRequiredElement<HTMLElement>('usage-empty'),
     configure: getRequiredElement<HTMLButtonElement>('usage-configure'),
@@ -121,13 +138,12 @@ const initializeUsagePanel = async (): Promise<void> => {
     elements.form.hidden = state !== 'form'
 
     const hasConfiguredKey = Boolean(apiKey) && state !== 'form'
-    elements.refresh.hidden = !hasConfiguredKey
+    onConfigurationChange(hasConfiguredKey)
     elements.edit.hidden = !hasConfiguredKey
   }
 
   const setRefreshing = (isRefreshing: boolean): void => {
     elements.section.classList.toggle('is-loading', isRefreshing)
-    elements.refresh.disabled = isRefreshing
   }
 
   const renderSummary = (snapshot: CachedUsageSnapshot, statusMessage = ''): void => {
@@ -211,7 +227,6 @@ const initializeUsagePanel = async (): Promise<void> => {
 
   elements.configure.addEventListener('click', openEditor)
   elements.edit.addEventListener('click', openEditor)
-  elements.refresh.addEventListener('click', () => void refreshUsage())
   elements.cancel.addEventListener('click', closeEditor)
 
   elements.visibility.addEventListener('click', () => {
@@ -252,11 +267,226 @@ const initializeUsagePanel = async (): Promise<void> => {
   if (!apiKey) {
     currentSnapshot = undefined
     setState('empty')
-    return
+    return { refresh: refreshUsage }
   }
 
   if (currentSnapshot) renderSummary(currentSnapshot)
-  await refreshUsage()
+  return { refresh: refreshUsage }
+}
+
+const initializeSubscriptionPanel = async (
+  onConfigurationChange: ConfigurationChangeHandler
+): Promise<UsagePanelController> => {
+  const elements = {
+    section: getRequiredElement<HTMLElement>('subscription-section'),
+    edit: getRequiredElement<HTMLButtonElement>('subscription-edit'),
+    empty: getRequiredElement<HTMLElement>('subscription-empty'),
+    configure: getRequiredElement<HTMLButtonElement>('subscription-configure'),
+    loading: getRequiredElement<HTMLElement>('subscription-loading'),
+    summary: getRequiredElement<HTMLElement>('subscription-summary'),
+    progress: getRequiredElement<HTMLElement>('subscription-progress'),
+    progressFill: getRequiredElement<HTMLElement>('subscription-progress-fill'),
+    percentage: getRequiredElement<HTMLElement>('subscription-percentage'),
+    fiveHourRemaining: getRequiredElement<HTMLElement>('subscription-five-hour-remaining'),
+    weeklyRemaining: getRequiredElement<HTMLElement>('subscription-weekly-remaining'),
+    status: getRequiredElement<HTMLElement>('subscription-status'),
+    error: getRequiredElement<HTMLElement>('subscription-error'),
+    form: getRequiredElement<HTMLFormElement>('subscription-form'),
+    input: getRequiredElement<HTMLInputElement>('subscription-token-input'),
+    visibility: getRequiredElement<HTMLButtonElement>('subscription-token-visibility'),
+    cancel: getRequiredElement<HTMLButtonElement>('subscription-token-cancel'),
+    save: getRequiredElement<HTMLButtonElement>('subscription-token-save'),
+  }
+
+  let accessToken = ''
+  let currentSnapshot: CachedSubscriptionUsageSnapshot | undefined
+  let lastError = ''
+  let requestVersion = 0
+
+  const setState = (state: UsagePanelState): void => {
+    elements.empty.hidden = state !== 'empty'
+    elements.loading.hidden = state !== 'loading'
+    elements.summary.hidden = state !== 'summary'
+    elements.error.hidden = state !== 'error'
+    elements.form.hidden = state !== 'form'
+
+    const hasConfiguredToken = Boolean(accessToken) && state !== 'form'
+    onConfigurationChange(hasConfiguredToken)
+    elements.edit.hidden = !hasConfiguredToken
+  }
+
+  const renderSummary = (
+    snapshot: CachedSubscriptionUsageSnapshot,
+    statusMessage = ''
+  ): void => {
+    const viewModel = createSubscriptionUsageViewModel(snapshot.data)
+    const displayStatus = statusMessage || (viewModel.hasStatusError ? '状态异常' : '')
+
+    elements.section.dataset.level = viewModel.level
+    elements.percentage.textContent = `已用 ${viewModel.usedPercentage.toFixed(1)}%`
+    elements.progress.setAttribute('aria-valuenow', String(viewModel.usedPercentage))
+    elements.progressFill.style.width = `${viewModel.progressPercentage}%`
+    elements.fiveHourRemaining.textContent = `${viewModel.remainingFiveHourPercentage}%`
+    elements.weeklyRemaining.textContent = `${viewModel.remainingWeeklyPercentage}%`
+    elements.status.textContent = displayStatus
+      ? `${displayStatus} · ${formatUpdatedAt(snapshot.queriedAt)}`
+      : formatUpdatedAt(snapshot.queriedAt)
+    elements.status.classList.toggle('is-error', Boolean(displayStatus))
+    setState('summary')
+  }
+
+  const showError = (message: string): void => {
+    lastError = message
+    if (currentSnapshot) {
+      renderSummary(currentSnapshot, message)
+      return
+    }
+
+    elements.error.textContent = message
+    setState('error')
+  }
+
+  const refreshSubscription = async (): Promise<void> => {
+    if (!accessToken) {
+      setState('empty')
+      return
+    }
+
+    const currentRequest = ++requestVersion
+    elements.section.classList.add('is-loading')
+    if (currentSnapshot) {
+      renderSummary(currentSnapshot)
+    } else {
+      setState('loading')
+    }
+
+    try {
+      const snapshot = await querySubscriptionUsage(accessToken)
+      if (currentRequest !== requestVersion) return
+
+      await cacheSubscriptionUsage(snapshot)
+      currentSnapshot = snapshot
+      lastError = ''
+      renderSummary(snapshot)
+    } catch (error) {
+      if (currentRequest !== requestVersion) return
+      showError(getSubscriptionUsageErrorMessage(error))
+    } finally {
+      if (currentRequest === requestVersion) {
+        elements.section.classList.remove('is-loading')
+      }
+    }
+  }
+
+  const openEditor = (): void => {
+    requestVersion += 1
+    elements.section.classList.remove('is-loading')
+    elements.input.value = accessToken
+    elements.input.type = 'password'
+    elements.visibility.textContent = '显示'
+    setState('form')
+    elements.input.focus()
+  }
+
+  const closeEditor = (): void => {
+    if (currentSnapshot) {
+      renderSummary(currentSnapshot, lastError)
+    } else if (lastError) {
+      showError(lastError)
+    } else if (accessToken) {
+      void refreshSubscription()
+    } else {
+      setState('empty')
+    }
+  }
+
+  elements.configure.addEventListener('click', openEditor)
+  elements.edit.addEventListener('click', openEditor)
+  elements.cancel.addEventListener('click', closeEditor)
+
+  elements.visibility.addEventListener('click', () => {
+    const shouldShow = elements.input.type === 'password'
+    elements.input.type = shouldShow ? 'text' : 'password'
+    elements.visibility.textContent = shouldShow ? '隐藏' : '显示'
+  })
+
+  elements.form.addEventListener('submit', (event) => {
+    event.preventDefault()
+    const nextToken = elements.input.value.trim()
+    if (!nextToken) {
+      elements.input.setCustomValidity('请输入订阅 Token')
+      elements.input.reportValidity()
+      return
+    }
+
+    elements.input.setCustomValidity('')
+    elements.save.disabled = true
+    void saveAccessToken(nextToken)
+      .then((savedToken) => {
+        accessToken = savedToken
+        currentSnapshot = undefined
+        lastError = ''
+        return refreshSubscription()
+      })
+      .catch((error) => showError(getSubscriptionUsageErrorMessage(error)))
+      .finally(() => {
+        elements.save.disabled = false
+      })
+  })
+
+  ;[accessToken, currentSnapshot] = await Promise.all([
+    loadAccessToken(),
+    loadCachedSubscriptionUsage(),
+  ])
+
+  if (!accessToken) {
+    currentSnapshot = undefined
+    setState('empty')
+    return { refresh: refreshSubscription }
+  }
+
+  if (currentSnapshot) renderSummary(currentSnapshot)
+  return { refresh: refreshSubscription }
+}
+
+const initializeUsagePanels = async (): Promise<void> => {
+  const refreshButton = getRequiredElement<HTMLButtonElement>('usage-refresh')
+  let hasApiKey = false
+  let hasSubscriptionToken = false
+
+  const updateRefreshVisibility = (): void => {
+    refreshButton.hidden = !(hasApiKey || hasSubscriptionToken)
+  }
+
+  const [usagePanel, subscriptionPanel] = await Promise.all([
+    initializeUsagePanel((isConfigured) => {
+      hasApiKey = isConfigured
+      updateRefreshVisibility()
+    }),
+    initializeSubscriptionPanel((isConfigured) => {
+      hasSubscriptionToken = isConfigured
+      updateRefreshVisibility()
+    }),
+  ])
+
+  let isRefreshing = false
+  const refreshAllUsage = async (): Promise<void> => {
+    if (isRefreshing) return
+
+    isRefreshing = true
+    refreshButton.disabled = true
+    try {
+      await Promise.all([usagePanel.refresh(), subscriptionPanel.refresh()])
+    } finally {
+      isRefreshing = false
+      refreshButton.disabled = false
+      updateRefreshVisibility()
+    }
+  }
+
+  refreshButton.addEventListener('click', () => void refreshAllUsage())
+
+  await refreshAllUsage()
 }
 
 // ==================== 渲染 ====================
@@ -336,8 +566,8 @@ const renderShortcuts = (): void => {
 document.addEventListener('DOMContentLoaded', () => {
   console.log('[Chrome Utils] Popup loaded')
   renderShortcuts()
-  void initializeUsagePanel().catch((error) => {
-    console.error('[Chrome Utils] Failed to initialize API usage panel:', error)
+  void initializeUsagePanels().catch((error) => {
+    console.error('[Chrome Utils] Failed to initialize usage panels:', error)
   })
 
   // 设置链接

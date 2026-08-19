@@ -50,6 +50,10 @@ body {
   --usage-color: #cf3f36;
 }
 
+.usage-section[data-level='error'] {
+  --usage-color: #b42318;
+}
+
 .usage-header,
 .usage-progress-row,
 .usage-meta,
@@ -181,6 +185,25 @@ body {
 .usage-quota-detail strong {
   color: #555;
   font-weight: 600;
+}
+
+.subscription-remaining {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.subscription-remaining strong {
+  color: #555;
+  font-weight: 600;
+}
+
+.subscription-meta > #subscription-status {
+  min-width: 0;
+  max-width: 44%;
+  text-align: right;
+  overflow-wrap: anywhere;
 }
 
 .usage-meta .is-error {
