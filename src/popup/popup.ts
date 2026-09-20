@@ -298,6 +298,10 @@ const initializeSubscriptionPanel = async (
     save: getRequiredElement<HTMLButtonElement>('subscription-token-save'),
   }
 
+  if (elements.section.hidden) {
+    return { refresh: async () => {} }
+  }
+
   let accessToken = ''
   let currentSnapshot: CachedSubscriptionUsageSnapshot | undefined
   let lastError = ''
